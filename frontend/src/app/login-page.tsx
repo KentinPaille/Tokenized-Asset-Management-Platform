@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { JSX, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage(): JSX.Element {
@@ -50,8 +50,8 @@ export default function LoginPage(): JSX.Element {
 
       // Redirection vers le dashboard
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la connexion");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Erreur lors de la connexion");
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ export default function LoginPage(): JSX.Element {
 
         <div className="mt-6 text-center text-sm text-slate-500">
           <p>
-            Pas encore de compte ? <a href="/signup" className="text-indigo-600">S'inscrire</a>
+            Pas encore de compte ? <a href="/signup" className="text-indigo-600">S&aposinscrire</a>
           </p>
         </div>
 
