@@ -1,7 +1,9 @@
+"use client";
+
 import React, { JSX, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage(): JSX.Element {
+export default function Page(): JSX.Element {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,13 +44,9 @@ export default function LoginPage(): JSX.Element {
       }
 
       const data = await res.json();
-      // on s'attend à recevoir { token: string, expiresIn?: number }
       if (!data?.token) throw new Error("Aucun token reçu");
 
-      // Stockage du token (ex : localStorage). Adapter selon les besoins (httpOnly cookie côté serveur préférable).
       localStorage.setItem("dew_token", data.token);
-
-      // Redirection vers le dashboard
       router.push("/dashboard");
     } catch (err: unknown) {
       setError((err as Error).message || "Erreur lors de la connexion");
@@ -103,7 +101,7 @@ export default function LoginPage(): JSX.Element {
 
         <div className="mt-6 text-center text-sm text-slate-500">
           <p>
-            Pas encore de compte ? <a href="/signup" className="text-indigo-600">S&aposinscrire</a>
+            Pas encore de compte ? <a href="/signup" className="text-indigo-600">S&apos;inscrire</a>
           </p>
         </div>
 
