@@ -1,0 +1,10 @@
+{
+    "name": "tokenized-contracts",
+    "version": "1.0.0",
+    "scripts": {
+        "deploy": "node ./deploy.js"
+    },
+    "dependencies": {
+        "dotenv": "^17.2.3"
+    }
+}

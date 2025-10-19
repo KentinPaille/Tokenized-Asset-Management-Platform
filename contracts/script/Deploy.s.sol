@@ -12,7 +12,7 @@ contract DeployScript is Script {
         vm.startBroadcast();
 
         // On charge le fichier JSON contenant les adresses
-        string memory path = string.concat(vm.projectRoot(), "./addresses/addresses.json");
+        string memory path = string.concat(vm.projectRoot(), "/addresses/addresses.json");
 
         // S'il existe déjà, on récupère les valeurs
         string memory json;
@@ -22,10 +22,10 @@ contract DeployScript is Script {
             json = "{}"; // fichier vide la première fois
         }
 
-        address registryAddr = vm.parseJsonAddress(json, ".registry");
-        address erc20Addr = vm.parseJsonAddress(json, ".erc20");
-        address erc721Addr = vm.parseJsonAddress(json, ".erc721");
-        address soulboundAddr = vm.parseJsonAddress(json, ".soulbound");
+        address registryAddr = vm.parseJsonAddress(json, ".registry_contract");
+        address erc20Addr = vm.parseJsonAddress(json, ".erc20_contract");
+        address erc721Addr = vm.parseJsonAddress(json, ".erc721_contract");
+        address soulboundAddr = vm.parseJsonAddress(json, ".soulbound_contract");
 
         // Déploiement conditionnel
         if (registryAddr == address(0)) {
