@@ -1,0 +1,22 @@
+{
+  "name": "tokenized-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "update:abi": "node utils/updateAbi.js",
+    "update:env": "node utils/updateEnv.js",
+    "update:contract": "npm run update:env && npm run update:abi",
+    "start": "node index.js",
+    "mint-worker": "node scripts/autoMintKyc.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "ethers": "^6.15.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
