@@ -6,6 +6,7 @@ import "../src/contracts/KYCRegistry.sol";
 import "../src/contracts/TokenizedERC20.sol";
 import "../src/contracts/TokenizedERC721.sol";
 import "../src/contracts/SoulboundKYCToken.sol";
+import "../src/contracts/SimpleOracle.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -26,6 +27,7 @@ contract DeployScript is Script {
         address erc20Addr = vm.parseJsonAddress(json, ".erc20_contract");
         address erc721Addr = vm.parseJsonAddress(json, ".erc721_contract");
         address soulboundAddr = vm.parseJsonAddress(json, ".soulbound_contract");
+        address oracleAddr = vm.parseJsonAddress(json, ".oracle_contract");
 
         // Déploiement conditionnel
         if (registryAddr == address(0)) {
@@ -65,6 +67,14 @@ contract DeployScript is Script {
             console.log("Using existing SoulboundKYCToken:", soulboundAddr);
         }
 
+        if (oracleAddr == address(0)) {
+            SimpleOracle oracle = new SimpleOracle(0);
+            oracleAddr = address(oracle);
+            console.log("Deployed SimpleOracle at", oracleAddr);
+        } else {
+            console.log("Using existing SimpleOracle:", oracleAddr);
+        }
+
         // Génération du JSON à jour
         string memory out = string.concat(
             '{"registry_contract":"',
@@ -75,6 +85,8 @@ contract DeployScript is Script {
             vm.toString(erc721Addr),
             '","soulbound_contract":"',
             vm.toString(soulboundAddr),
+            '","oracle_contract":"',
+            vm.toString(oracleAddr),
             '"}'
         );
 
