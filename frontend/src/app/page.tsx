@@ -1,103 +1,249 @@
-import Image from "next/image";
+"use client";
+import React, { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
-export default function Home() {
+// Replace these env vars in your Next.js .env.local
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+const RPC = process.env.NEXT_PUBLIC_RPC_URL || "";
+
+export default function HomePage() {
+  const [provider, setProvider] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [address, setAddress] = useState("");
+  const [ethBalance, setEthBalance] = useState("0");
+  const [erc20Balance, setErc20Balance] = useState("0");
+  const [kycStatus, setKycStatus] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [txLoading, setTxLoading] = useState(false);
+  const [indexerState, setIndexerState] = useState(null);
+  const [oraclePrice, setOraclePrice] = useState(null);
+
+  // helper to detect window.ethereum
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      alert("Please install MetaMask or use a wallet that injects window.ethereum");
+      return;
+    }
+    try {
+      const p = new ethers.BrowserProvider(window.ethereum);
+      setProvider(p);
+      const s = await p.getSigner();
+      setSigner(s);
+      const addr = await s.getAddress();
+      setAddress(addr);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (address && provider) {
+      fetchEthBalance();
+      fetchErc20Balance();
+      fetchKycStatus();
+      fetchIndexer();
+      fetchOracle();
+    }
+    // poll indexer and balances periodically
+    const t = setInterval(() => {
+      if (address) {
+        fetchEthBalance();
+        fetchErc20Balance();
+        fetchIndexer();
+      }
+    }, 60000);
+    return () => clearInterval(t);
+  }, [address]);
+
+  async function fetchEthBalance() {
+    try {
+      const bal = await provider.getBalance(address);
+      setEthBalance(ethers.formatEther(bal));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function fetchErc20Balance() {
+    try {
+      const res = await fetch(`${BACKEND}/erc20/balance/${address}`);
+      const json = await res.json();
+      setErc20Balance(json.balance ?? "0");
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function fetchKycStatus() {
+    try {
+      const res = await fetch(`${BACKEND}/kyc/status/${address}`);
+      const json = await res.json();
+      setKycStatus(json.isKYCValid ?? json.isWhitelisted ?? false);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function requestWhitelist() {
+    if (!address) return alert("Connect wallet first");
+    setTxLoading(true);
+    try {
+      const res = await fetch(`${BACKEND}/kyc/whitelist/${address}`, { method: "POST" });
+      const j = await res.json();
+      if (res.ok) alert("Whitelist tx sent: " + j.txHash);
+      else alert("Error: " + JSON.stringify(j));
+      // poll status
+      setTimeout(fetchKycStatus, 5000);
+    } catch (e) {
+      console.error(e);
+      alert("Request failed");
+    } finally {
+      setTxLoading(false);
+    }
+  }
+
+  async function mintErc20(amount = "1") {
+    if (!address) return alert("Connect wallet first");
+    setTxLoading(true);
+    try {
+      // call backend mint which is owner-only; your backend wallet must be owner
+      const res = await fetch(`${BACKEND}/mint/${address}/${amount}`, { method: "POST" });
+      const j = await res.json();
+      if (res.ok) alert("Mint tx: " + j.txHash);
+      else alert("Mint error: " + JSON.stringify(j));
+      setTimeout(fetchErc20Balance, 5000);
+    } catch (e) {
+      console.error(e);
+      alert("Mint failed");
+    } finally {
+      setTxLoading(false);
+    }
+  }
+
+  async function mintSoulbound() {
+    if (!address) return alert("Connect wallet first");
+    setTxLoading(true);
+    try {
+      const res = await fetch(`${BACKEND}/soul/mint/${address}`, { method: "POST" });
+      const j = await res.json();
+      if (res.ok) alert("Soul mint tx: " + j.txHash);
+      else alert("Soul mint error: " + JSON.stringify(j));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTxLoading(false);
+    }
+  }
+
+  async function addLiquidity() {
+    if (!address) return alert("Connect wallet first");
+    setTxLoading(true);
+    try {
+      const res = await fetch(`${BACKEND}/add-liquidity`, { method: "POST" });
+      const j = await res.json();
+      if (res.ok) alert("Add liquidity tx: " + j.txHash);
+      else alert("Add liquidity error: " + JSON.stringify(j));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTxLoading(false);
+    }
+  }
+
+  async function fetchIndexer() {
+    try {
+      const res = await fetch(`http://localhost:4001/api/state`);
+      const j = await res.json();
+      setIndexerState(j);
+    } catch (e) {
+      // indexer might not be running
+    }
+  }
+
+  async function fetchOracle() {
+    try {
+      const res = await fetch(`${BACKEND}/oracle/price`);
+      const j = await res.json();
+      setOraclePrice(j.price ?? null);
+    } catch (e) {
+      // optional
+    }
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow p-6">
+        <header className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Tokenized Asset Management — Dashboard</h1>
+          <div>
+            {address ? (
+              <div className="text-sm text-gray-700">Connected: {address}</div>
+            ) : (
+              <button onClick={connectWallet} className="px-4 py-2 bg-indigo-600 text-white rounded">Connect Wallet</button>
+            )}
+          </div>
+        </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <section className="grid grid-cols-2 gap-4 mb-6">
+          <div className="p-4 border rounded">
+            <h2 className="font-semibold">Balances</h2>
+            <p className="text-sm">ETH: <strong>{ethBalance}</strong></p>
+            <p className="text-sm">ERC20 (token): <strong>{erc20Balance}</strong></p>
+          </div>
+
+          <div className="p-4 border rounded">
+            <h2 className="font-semibold">KYC</h2>
+            <p className="text-sm">Whitelisted: <strong>{kycStatus ? "Yes" : "No"}</strong></p>
+            <div className="mt-3 space-x-2">
+              <button onClick={requestWhitelist} disabled={txLoading} className="px-3 py-1 bg-green-600 text-white rounded">Request Whitelist</button>
+              <button onClick={() => fetchKycStatus()} className="px-3 py-1 bg-gray-200 rounded">Refresh</button>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-3 gap-4 mb-6">
+          <div className="p-4 border rounded">
+            <h3 className="font-semibold mb-2">Mint ERC20</h3>
+            <button onClick={() => mintErc20("1")} className="w-full py-2 bg-indigo-600 text-white rounded">Mint 1 token</button>
+          </div>
+
+          <div className="p-4 border rounded">
+            <h3 className="font-semibold mb-2">Soulbound (KYC Token)</h3>
+            <button onClick={mintSoulbound} className="w-full py-2 bg-yellow-600 text-white rounded">Mint Soulbound</button>
+          </div>
+
+          <div className="p-4 border rounded">
+            <h3 className="font-semibold mb-2">DEX / Liquidity</h3>
+            <button onClick={addLiquidity} className="w-full py-2 bg-rose-600 text-white rounded">Add Liquidity</button>
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <h2 className="font-semibold mb-2">Indexer snapshot (latest)</h2>
+          <div className="p-4 border rounded bg-gray-50">
+            {indexerState ? (
+              <div>
+                <p>Latest block: {indexerState.latestBlock}</p>
+                <h4 className="mt-2 font-medium">Recent Transfers</h4>
+                <ul className="text-sm list-disc ml-6">
+                  {indexerState.transfers.slice(0,5).map((t, i) => (
+                    <li key={i}>{t.from} → {t.to} ({ethers.formatEther(t.value)})</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Indexer not running or no data yet.</p>
+            )}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="font-semibold mb-2">Oracle</h2>
+          <div className="p-4 border rounded">Price: <strong>{oraclePrice ?? "n/a"}</strong></div>
+        </section>
+
+        <footer className="mt-6 text-xs text-gray-400">Note: backend must be running at {BACKEND} and indexer at http://localhost:4001</footer>
+      </div>
+    </main>
   );
 }
