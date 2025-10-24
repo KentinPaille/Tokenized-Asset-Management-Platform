@@ -3,7 +3,10 @@ pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "./IKYCRegistry.sol";
+import "../interfaces/IKYCRegistry.sol";
+
+
+
 
 /// @title SoulboundKYCToken
 /// @notice ERC20-like token where:

@@ -28,7 +28,7 @@ router.get("/erc20/balance/:address", async (req, res) => {
 });
 
 // ✅ POST /api/erc20/transfer
-router.post("/transfer", async (req, res) => {
+router.post("/erc20/transfer", async (req, res) => {
   try {
     const { to, amount } = req.body;
     const tx = await erc20.transfer(to, ethers.parseEther(amount.toString()));
@@ -41,7 +41,7 @@ router.post("/transfer", async (req, res) => {
 });
 
 // ✅ POST /api/erc20/mint/:address/:amount — Mint des tokens ERC20
-router.post("/mint/:address/:amount", async (req, res) => {
+router.post("/erc20/mint/:address/:amount", async (req, res) => {
   try {
     const { address, amount } = req.params;
     const tx = await erc20.mint(address, ethers.parseUnits(amount, 18));

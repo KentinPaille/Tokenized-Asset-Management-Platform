@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "./IKYCRegistry.sol";
+import "../interfaces/IKYCRegistry.sol";
+
 
 contract TokenizedERC721 is ERC721, Ownable {
     IKYCRegistry public registry;

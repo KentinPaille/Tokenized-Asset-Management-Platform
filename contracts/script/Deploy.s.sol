@@ -39,7 +39,7 @@ contract DeployScript is Script {
         }
 
         if (erc20Addr == address(0)) {
-            TokenizedERC20 erc20 = new TokenizedERC20("RealEstateToken", "RET", registryAddr);
+            TokenizedERC20 erc20 = new TokenizedERC20("Lazyness", "LAZ", registryAddr);
             erc20Addr = address(erc20);
             console.log("Deployed TokenizedERC20 at", erc20Addr);
         } else {

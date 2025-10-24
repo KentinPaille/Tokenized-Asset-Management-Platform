@@ -2,67 +2,85 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
-import "@uniswap/v3-core/contracts/UniswapV3Factory.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./../src/interfaces/IUniswapV3Factory.sol";
+import "./../src/interfaces/IUniswapV3Pool.sol";
+import "./../src/interfaces/INonfungiblePositionManager.sol";
+import "./../src/interfaces/IERC20Minimal.sol";
+import "./../src/interfaces/IKYCRegistry.sol";
+import "forge-std/console.sol";
 
-/// @notice Script pour créer un pool Uniswap V3 et y ajouter de la liquidité initiale
 contract AddLiquidityV3 is Script {
-    // ⚙️ Adresse de ton token ERC20 déployé
-    address constant TOKEN = 0x0077a8005D7B0f9412ECF88E21f7c5018bd61c94; // <-- Remplace par ton TokenizedERC20
-    address constant WETH = 0x4200000000000000000000000000000000000006; // WETH sur Base Sepolia
-
-    // ⚙️ Adresse des contrats déployés via DeployDexV3
+    address public TOKEN;
+    address public KYC_REGISTRY;
+    address constant WETH = 0x4200000000000000000000000000000000000006;
     address constant FACTORY = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
     address constant POSITION_MANAGER = 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2;
-
-    // Fee tiers Uniswap (0.3% = 3000)
     uint24 public constant FEE = 3000;
 
     function run() external {
         vm.startBroadcast();
 
-        UniswapV3Factory factory = UniswapV3Factory(FACTORY);
-        INonfungiblePositionManager positionManager =
-            INonfungiblePositionManager(POSITION_MANAGER);
+        // Charger les adresses depuis le JSON
+        string memory path = string.concat(vm.projectRoot(), "/addresses/addresses.json");
+        string memory json;
+        try vm.readFile(path) returns (string memory content) {
+            json = content;
+        } catch {
+            json = "{}";
+        }
+        TOKEN = vm.parseJsonAddress(json, ".erc20_contract");
+        KYC_REGISTRY = vm.parseJsonAddress(json, ".registry_contract");
 
-        // 1️⃣ Créer le pool si inexistant
-        address pool = factory.createPool(TOKEN, WETH, FEE);
-        console.log("Pool built:", pool);
+        IUniswapV3Factory factory = IUniswapV3Factory(FACTORY);
+        INonfungiblePositionManager positionManager = INonfungiblePositionManager(POSITION_MANAGER);
+        IKYCRegistry kycRegistry = IKYCRegistry(KYC_REGISTRY);
 
-        // 2️⃣ Initialiser le prix du pool (1 token = 0.01 WETH ici)
-        uint160 sqrtPriceX96 = 79228162514264337593543950336 / 10; // sqrt(1/100) * 2^96
-        IUniswapV3Pool(pool).initialize(sqrtPriceX96);
-        console.log("Pool initialized with price 1:100");
+        // Créer ou récupérer le pool
+        address pool = factory.getPool(TOKEN, WETH, FEE);
+        if (pool == address(0)) {
+            pool = factory.createPool(TOKEN, WETH, FEE);
+            uint160 sqrtPriceX96 = 250426189813841424972441600;
+            IUniswapV3Pool(pool).initialize(sqrtPriceX96);
+            console.log("Pool initialized");
+        } else {
+            console.log("Pool already exists:", pool);
+        }
 
-        // 3️⃣ Autoriser le PositionManager à dépenser les tokens
-        IERC20(TOKEN).approve(POSITION_MANAGER, type(uint256).max);
-        IERC20(WETH).approve(POSITION_MANAGER, type(uint256).max);
+        // ✅ WHITELIST LE POOL ET LE POSITION MANAGER (sans staticcall)
+        kycRegistry.addToWhitelist(pool);
+        console.log("Pool whitelisted:", pool);
 
-        // 4️⃣ Ajouter de la liquidité initiale
+        kycRegistry.addToWhitelist(0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4);
+        console.log("SwapRouter whitelisted");
+        
+        kycRegistry.addToWhitelist(POSITION_MANAGER);
+        console.log("Position Manager whitelisted:", POSITION_MANAGER);
+
+        // Approuver les tokens
+        IERC20Minimal(TOKEN).approve(POSITION_MANAGER, type(uint256).max);
+        IERC20Minimal(WETH).approve(POSITION_MANAGER, type(uint256).max);
+
+        // Ajouter la liquidité
         INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
             token0: TOKEN,
             token1: WETH,
             fee: FEE,
-            tickLower: -887220, // plage entière
-            tickUpper: 887220,
-            amount0Desired: 1_000 * 1e18, // 1000 TokenizedERC20
-            amount1Desired: 0.01 * 1e18,    // 0.01 WETH
+            tickLower: -120000,
+            tickUpper: -110040,
+            amount0Desired: 100 * 1e18,
+            amount1Desired: 1e16,
             amount0Min: 0,
             amount1Min: 0,
             recipient: msg.sender,
             deadline: block.timestamp + 600
         });
 
-        (uint256 tokenId,, uint256 amount0, uint256 amount1) =
-            positionManager.mint(params);
+        (uint256 tokenId, , uint256 amount0, uint256 amount1) = positionManager.mint(params);
 
-        console.log("Liquidity added to the pool!");
-        console.log("Token ID :", tokenId);
-        console.log("Amount0 (TokenizedERC20) :", amount0);
-        console.log("Amount1 (WETH) :", amount1);
+        console.log("Liquidity added!");
+        console.log("Token ID:", tokenId);
+        console.log("Amount0:", amount0);
+        console.log("Amount1:", amount1);
 
         vm.stopBroadcast();
     }

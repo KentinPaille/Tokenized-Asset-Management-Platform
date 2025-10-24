@@ -13,7 +13,7 @@ const abi = JSON.parse(fs.readFileSync("./abi/KYCRegistry.json", "utf8"));
 // Initialiser le contrat
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-const kycContract = new ethers.Contract(process.env.KYC_CONTRACT, abi, wallet);
+const kycContract = new ethers.Contract(process.env.REGISTRY_CONTRACT, abi, wallet);
 
 // ✅ GET /api/kyc/status/:address — Vérifie si une adresse est KYC-validée
 router.get("/kyc/status/:address", async (req, res) => {

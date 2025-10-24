@@ -4,4 +4,6 @@ const { execSync } = require('child_process');
 const RPC_URL = process.env.RPC_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
-execSync(`forge script script/Deploy.s.sol --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --broadcast`, { stdio: 'inherit' });
+// execSync(`forge script script/Deploy.s.sol --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --broadcast`, { stdio: 'inherit' });
+// execSync(`forge script script/AddLiquidityV3.s.sol --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --broadcast`, { stdio: 'inherit' });
+execSync(`forge script script/DeploySimpleSwap.s.sol:DeploySimpleSwap --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --broadcast --verify`, { stdio: 'inherit' });
