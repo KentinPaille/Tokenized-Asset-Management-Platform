@@ -130,7 +130,7 @@ export default function HomePage() {
     // 👂 Démarrer l'écoute temps réel
   async function startListening() {
     try {
-      const res = await fetch('http://localhost:4001/api/listen', {
+      const res = await fetch('http://74.82.28.125:4001/api/listen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address })
@@ -149,7 +149,7 @@ export default function HomePage() {
   // 🔇 Arrêter l'écoute
   async function stopListening() {
     try {
-      await fetch('http://localhost:4001/api/unlisten', {
+      await fetch('http://74.82.28.125:4001/api/unlisten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address })
@@ -175,7 +175,7 @@ export default function HomePage() {
 
   async function fetchIndexerState() {
     try {
-      const res = await fetch("https://74.82.28.125:4001/api/state");
+      const res = await fetch("http://74.82.28.125:4001/api/state");
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const json: IndexerState = await res.json();
@@ -365,7 +365,7 @@ export default function HomePage() {
 
   async function fetchIndexer() {
     try {
-      const res = await fetch(`http://localhost:4001/api/state`);
+      const res = await fetch(`http://74.82.28.125:4001/api/state`);
       const j = await res.json();
       setIndexerState(j);
     } catch (e) {}
