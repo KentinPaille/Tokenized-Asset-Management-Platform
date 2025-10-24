@@ -3,14 +3,10 @@ import { useEffect, useState } from 'react';
 
 const STORAGE_PREFIX = 'transfers_history_';
 
-export function useTransfersWithPersistence(walletAddress) {
+export function useTransfersWithPersistence(walletAddress:any) {
   const [transfers, setTransfers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Clé unique par wallet
-  const storageKey = walletAddress 
-    ? `${STORAGE_PREFIX}${walletAddress.toLowerCase()}` 
-    : null;
+  const storageKey = walletAddress ? `${STORAGE_PREFIX}${walletAddress.toLowerCase()}` : "transfers_history_";
 
   // 📥 Charger les transferts quand le wallet change
   useEffect(() => {
@@ -51,7 +47,7 @@ export function useTransfersWithPersistence(walletAddress) {
     try {
       localStorage.setItem(storageKey, JSON.stringify(transfers));
       console.log(`💾 Saved ${transfers.length} transfers for ${walletAddress?.slice(0, 6)}...`);
-    } catch (err) {
+    } catch (err:any) {
       console.error('❌ Error saving transfers:', err);
       if (err.name === 'QuotaExceededError') {
         console.warn('⚠️ Storage quota exceeded, keeping only last 500 transfers');

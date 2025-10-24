@@ -23,17 +23,25 @@ const ERC20_ABI = [
 ];
 
 export default function HomePage() {
-  const [provider, setProvider] = useState(null);
-  const [signer, setSigner] = useState(null);
-  const [address, setAddress] = useState("");
+  // Basic Transfer type used by the indexer/list of transfers in this component
+  type Transfer = {
+    txHash: string;
+    from: string;
+    to: string;
+    value: any;
+  };
+
+  const [provider, setProvider] = useState<any>(null);
+  const [signer, setSigner] = useState<any>(null);
+  const [address, setAddress] = useState<string>("");
   const [ethBalance, setEthBalance] = useState("0");
   const [wethBalance, setWethBalance] = useState("0");
   const [erc20Balance, setErc20Balance] = useState("0");
   const [soulboundBalance, setSoulboundBalance] = useState("0");
   const [kycStatus, setKycStatus] = useState(false);
   const [txLoading, setTxLoading] = useState(false);
-  const [indexerState, setIndexerState] = useState(null);
-  const [oraclePrice, setOraclePrice] = useState(null);
+  const [indexerState, setIndexerState] = useState<any>(null);
+  const [oraclePrice, setOraclePrice] = useState<any>(null);
   const [lazyTokenAddress, setLazyTokenAddress] = useState("0x0077a8005D7B0f9412ECF88E21f7c5018bd61c94");
   const [estimatedOutput, setEstimatedOutput] = useState("0.0");
     const { 
@@ -41,7 +49,7 @@ export default function HomePage() {
     setTransfers, 
     isLoading, 
     clearTransfers 
-  } = useTransfersWithPersistence(address);
+  } = useTransfersWithPersistence(address)
   const [lastSyncBlock, setLastSyncBlock] = useState(0);
   const [isListening, setIsListening] = useState(false);
   // Swap states
@@ -59,7 +67,7 @@ export default function HomePage() {
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: `0x${chainId.toString(16)}` }],
         });
-      } catch (switchError) {
+      } catch (switchError:any) {
         // Network not added, try to add it
         if (switchError.code === 4902) {
           await window.ethereum.request({
@@ -75,7 +83,7 @@ export default function HomePage() {
         }
       }
 
-      const p = new ethers.BrowserProvider(window.ethereum);
+      const p:any = new ethers.BrowserProvider(window.ethereum);
       setProvider(p);
       const s = await p.getSigner();
       setSigner(s);
@@ -87,10 +95,11 @@ export default function HomePage() {
     }
   };
   useEffect(() => {
-    if (address) {
-      startListening();
-      return () => stopListening();
-    }
+    if (!address) return; // rien à faire si pas d'adresse
+    startListening();
+    return () => {
+      stopListening();
+    };
   }, [address]);
 
   useEffect(() => {
@@ -162,24 +171,32 @@ export default function HomePage() {
     }
   }
 
-  // 📦 Récupérer l'état de l'indexer
+
+
   async function fetchIndexerState() {
     try {
       const res = await fetch("http://localhost:4001/api/state");
-      const json = await res.json();
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const json: IndexerState = await res.json();
       console.log("📦 Indexer state:", json);
-      
+
       setLastSyncBlock(json.latestBlock);
-      
+
       setTransfers(prev => {
-        const existingHashes = new Set(prev.map(t => t.txHash));
-        const newOnes = (json.transfers ?? []).filter(t => !existingHashes.has(t.txHash));
-        return [...newOnes, ...prev].slice(0, 1000);
+        const existingHashes = new Set(prev.map((t:any) => t.txHash));
+        const newOnes = (json.transfers ?? []).filter((t:any) => !existingHashes.has(t.txHash));
+        return [...newOnes, ...prev].slice(0, 1000) as any;
       });
     } catch (err) {
-      console.error("❌ Error fetching indexer state:", err);
+      if (err instanceof Error) {
+        console.error("❌ Error fetching indexer state:", err.message);
+      } else {
+        console.error("❌ Unexpected error:", err);
+      }
     }
   }
+
 
   async function fetchWEthBalanceWithProvider() {
     try {
@@ -219,9 +236,11 @@ export default function HomePage() {
 
   async function sendErc20() {
     if (!signer) return alert("Connect wallet first");
-
-    const to = document.querySelector('input[placeholder="Recipient Address"]').value;
-    const amount = parseFloat(document.querySelector('input[placeholder="Amount"]').value);
+    const to_get:any = document.querySelector('input[placeholder="Recipient Address"]');
+    const amount_get:any = document.querySelector('input[placeholder="Amount"]');
+    if (!to_get || !amount_get) return alert("Input fields not found");
+    const to = to_get.value;
+    const amount = parseFloat(amount_get.value);
     if (!to || !amount || amount <= 0) return alert("Enter valid recipient and amount");
 
     try {
@@ -251,7 +270,7 @@ export default function HomePage() {
 
       setTimeout(fetchErc20Balance, 2000);
       setTimeout(fetchEthBalance, 2000);
-    } catch (e) {
+    } catch (e:any) {
       console.error(e);
       alert("Erreur lors du transfert : " + (e.message || "Unknown error"));
     }
@@ -445,8 +464,8 @@ export default function HomePage() {
       await fetchWEthBalanceWithProvider();
       await fetchEthBalance();
       setSwapLoading(false);
-      
-    } catch (error) {
+
+    } catch (error:any) {
       console.error(error);
       alert("Erreur: " + (error.message || "Unknown error"));
       setSwapLoading(false);
@@ -701,7 +720,7 @@ export default function HomePage() {
                 </div>
                 
                 <div className="space-y-2">
-                  {transfers.slice(0, 5).map((t, i) => {
+                  {transfers.slice(0, 5).map((t:any, i) => {
                     const isReceived = t.to.toLowerCase() === address.toLowerCase();
                     const isSent = t.from.toLowerCase() === address.toLowerCase();
                     
