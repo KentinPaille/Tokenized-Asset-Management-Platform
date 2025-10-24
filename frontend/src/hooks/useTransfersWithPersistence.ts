@@ -15,7 +15,7 @@ export function useTransfersWithPersistence(walletAddress:any) {
     } else {
       setIsLoading(false);
       setTransfers([]);
-    }
+      }
   }, [storageKey]);
 
   // 💾 Sauvegarder automatiquement quand transfers change
