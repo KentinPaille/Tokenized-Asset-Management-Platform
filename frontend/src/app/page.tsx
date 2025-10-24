@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { useTransfersWithPersistence } from '../hooks/useTransfersWithPersistence';
 
-const BACKEND = "http://localhost:3001";
+const BACKEND = "http://74.82.28.125:3001";
 const RPC = process.env.NEXT_PUBLIC_RPC;
 const SWAP_ROUTER = "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4";
 const UNISWAP_FACTORY = "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24";
@@ -175,7 +175,7 @@ export default function HomePage() {
 
   async function fetchIndexerState() {
     try {
-      const res = await fetch("http://localhost:4001/api/state");
+      const res = await fetch("https://74.82.28.125:4001/api/state");
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const json: IndexerState = await res.json();
@@ -783,7 +783,7 @@ export default function HomePage() {
         {/* Footer */}
         <footer className="text-center text-purple-300 text-sm bg-white/10 backdrop-blur-md rounded-2xl p-4">
           <p className="font-bold text-white mb-2">⚠️ BASE SEPOLIA TESTNET ONLY</p>
-          <p>Backend: {BACKEND} • Indexer: http://localhost:4001</p>
+          <p>Backend: {BACKEND} • Indexer: http://74.82.28.125:4001</p>
           <p className="text-xs mt-2">Chain ID: 84532 • RPC: https://sepolia.base.org</p>
         </footer>
       </div>
