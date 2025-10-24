@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { useTransfersWithPersistence } from '../hooks/useTransfersWithPersistence';
 
-const BACKEND = "http://74.82.28.125:3001";
+const BACKEND = "http://74.82.28.125";
 const RPC = process.env.NEXT_PUBLIC_RPC_URL;
 const SWAP_ROUTER = "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4";
 const UNISWAP_FACTORY = "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24";
@@ -40,7 +40,6 @@ export default function HomePage() {
   const [soulboundBalance, setSoulboundBalance] = useState("0");
   const [kycStatus, setKycStatus] = useState(false);
   const [txLoading, setTxLoading] = useState(false);
-  const [indexerState, setIndexerState] = useState<any>(null);
   const [oraclePrice, setOraclePrice] = useState<any>(null);
   const [lazyTokenAddress, setLazyTokenAddress] = useState("0x0077a8005D7B0f9412ECF88E21f7c5018bd61c94");
   const [estimatedOutput, setEstimatedOutput] = useState("0.0");
@@ -109,7 +108,6 @@ export default function HomePage() {
       fetchErc20Balance();
       fetchSoulboundBalance();
       fetchKycStatus();
-      fetchIndexer();
       fetchOracle();
       fetchLazyTokenAddress();
       updateEstimatedOutput();
@@ -130,7 +128,7 @@ export default function HomePage() {
     // 👂 Démarrer l'écoute temps réel
   async function startListening() {
     try {
-      const res = await fetch('http://74.82.28.125:4001/api/listen', {
+      const res = await fetch(`${BACKEND}:4001/api/listen`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address })
@@ -149,7 +147,7 @@ export default function HomePage() {
   // 🔇 Arrêter l'écoute
   async function stopListening() {
     try {
-      await fetch('http://74.82.28.125:4001/api/unlisten', {
+      await fetch(`${BACKEND}:4001/api/unlisten`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address })
@@ -175,7 +173,7 @@ export default function HomePage() {
 
   async function fetchIndexerState() {
     try {
-      const res = await fetch("http://74.82.28.125:4001/api/state");
+      const res = await fetch(`http://74.82.28.125:4001/api/state`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const json: IndexerState = await res.json();
@@ -211,7 +209,7 @@ export default function HomePage() {
 
   async function fetchErc20Balance() {
     try {
-      const res = await fetch(`${BACKEND}/erc20/balance/${address}`);
+      const res = await fetch(`${BACKEND}:3001/erc20/balance/${address}`);
       const json = await res.json();
       setErc20Balance(json.balance ?? "0");
     } catch (e) {
@@ -222,7 +220,7 @@ export default function HomePage() {
   async function mintErc20() {
     if (!signer) return alert("Connect wallet first");
     try {
-      const res = await fetch(`${BACKEND}/erc20/mint/${address}/1000`, {
+      const res = await fetch(`${BACKEND}:3001/erc20/mint/${address}/1000`, {
         method: "POST",
       });
       const json = await res.json();
@@ -278,7 +276,7 @@ export default function HomePage() {
 
   async function fetchSoulboundBalance() {
     try {
-      const res = await fetch(`${BACKEND}/soulbound/balance/${address}`);
+      const res = await fetch(`${BACKEND}:3001/soulbound/balance/${address}`);
       const json = await res.json();
       setSoulboundBalance(json.balance ?? "0");
     } catch (e) {
@@ -289,7 +287,7 @@ export default function HomePage() {
   async function mintSoulbound() {
     if (!signer) return alert("Connect wallet first");
     try {
-      const res = await fetch(`${BACKEND}/soulbound/mint/${address}/1`, {
+      const res = await fetch(`${BACKEND}:3001/soulbound/mint/${address}/1`, {
         method: "POST",
       });
       const json = await res.json();
@@ -303,7 +301,7 @@ export default function HomePage() {
 
   async function fetchKycStatus() {
     try {
-      const res = await fetch(`${BACKEND}/kyc/status/${address}`);
+      const res = await fetch(`${BACKEND}:3001/kyc/status/${address}`);
       const json = await res.json();
       setKycStatus(json.isKycValid ?? false);
     } catch (e) {
@@ -351,7 +349,7 @@ export default function HomePage() {
     if (!address) return alert("Connect wallet first");
     setTxLoading(true);
     try {
-      const res = await fetch(`${BACKEND}/kyc/add-to-whitelist/${address}`);
+      const res = await fetch(`${BACKEND}:3001/kyc/add-to-whitelist/${address}`);
       const json = await res.json();
       if (res.ok) alert("Whitelist tx sent: " + json.txHash);
       else alert("Error: " + JSON.stringify(json));
@@ -363,17 +361,10 @@ export default function HomePage() {
     }
   }
 
-  async function fetchIndexer() {
-    try {
-      const res = await fetch(`http://74.82.28.125:4001/api/state`);
-      const j = await res.json();
-      setIndexerState(j);
-    } catch (e) {}
-  }
 
   async function fetchOracle() {
     try {
-      const res = await fetch(`${BACKEND}/oracle/price`);
+      const res = await fetch(`${BACKEND}:3001/oracle/price`);
       const j = await res.json();
       setOraclePrice(j.price ?? null);
     } catch (e) {}
@@ -783,7 +774,7 @@ export default function HomePage() {
         {/* Footer */}
         <footer className="text-center text-purple-300 text-sm bg-white/10 backdrop-blur-md rounded-2xl p-4">
           <p className="font-bold text-white mb-2">⚠️ BASE SEPOLIA TESTNET ONLY</p>
-          <p>Backend: {BACKEND} • Indexer: http://74.82.28.125:4001</p>
+          <p>Backend: {BACKEND}:3001 • Indexer: {BACKEND}:4001</p>
           <p className="text-xs mt-2">Chain ID: 84532 • RPC: https://sepolia.base.org</p>
         </footer>
       </div>
