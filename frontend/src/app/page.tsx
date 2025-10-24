@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 import { useTransfersWithPersistence } from '../hooks/useTransfersWithPersistence';
 
 const BACKEND = "http://localhost:3001";
-const RPC = "https://base-sepolia.g.alchemy.com/v2/yKaf_PzhcjL11f5WX9g0l";
+const RPC = process.env.NEXT_PUBLIC_RPC;
 const SWAP_ROUTER = "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4";
 const UNISWAP_FACTORY = "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24";
 const WETH = "0x4200000000000000000000000000000000000006";
