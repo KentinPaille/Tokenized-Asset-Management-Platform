@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract SimpleOracle {
+import "../interfaces/IERC20Minimal.sol";
+
+contract ERC20Oracle {
+    address public token;
+    uint256 public price; // prix en wei (ETH) ou en USD * 1e18
     address public owner;
-    mapping(address => bool) public updaters;
-    int256 public latestPrice;
-    uint256 public lastUpdated;
 
-    event PriceUpdated(int256 price, uint256 timestamp);
-    event UpdaterAdded(address who);
-    event UpdaterRemoved(address who);
+    event PriceUpdated(uint256 newPrice);
 
-    modifier onlyOwner() { require(msg.sender == owner, "only owner"); _; }
-    modifier onlyUpdater() { require(msg.sender == owner || updaters[msg.sender], "not updater"); _; }
-
-    constructor(int256 initialPrice) {
+    constructor(address _token) {
+        token = _token;
         owner = msg.sender;
-        latestPrice = initialPrice;
-        lastUpdated = block.timestamp;
     }
 
-    function addUpdater(address u) external onlyOwner { updaters[u] = true; emit UpdaterAdded(u); }
-    function removeUpdater(address u) external onlyOwner { updaters[u] = false; emit UpdaterRemoved(u); }
-
-    function updatePrice(int256 price) external onlyUpdater {
-        latestPrice = price;
-        lastUpdated = block.timestamp;
-        emit PriceUpdated(price, block.timestamp);
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
     }
 
-    function getLatestPrice() external view returns (int256, uint256) { return (latestPrice, lastUpdated); }
+    // Mise à jour du prix par l'oracle (off-chain)
+    function updatePrice(uint256 _price) external onlyOwner {
+        price = _price;
+        emit PriceUpdated(_price);
+    }
+
+    // Lecture du prix
+    function getPrice() external view returns (uint256) {
+        return price;
+    }
 }

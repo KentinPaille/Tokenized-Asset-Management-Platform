@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { useTransfersWithPersistence } from '../hooks/useTransfersWithPersistence';
 
@@ -24,7 +24,7 @@ export default function HomePage() {
   const [soulboundBalance, setSoulboundBalance] = useState("0");
   const [kycStatus, setKycStatus] = useState(false);
   const [txLoading, setTxLoading] = useState(false);
-  const [oraclePrice, setOraclePrice] = useState<any>(null);
+  const [oraclePrice, setOraclePrice] = useState<any>("0");
   const [lazyTokenAddress, setLazyTokenAddress] = useState("0x0077a8005D7B0f9412ECF88E21f7c5018bd61c94");
   const [estimatedOutput, setEstimatedOutput] = useState("0.0");
     const { 
@@ -77,6 +77,7 @@ export default function HomePage() {
       alert("Failed to connect to Base Sepolia");
     }
   };
+
   useEffect(() => {
     if (!address) return; // rien à faire si pas d'adresse
     startListening();
@@ -86,17 +87,23 @@ export default function HomePage() {
   }, [address]);
 
   useEffect(() => {
+    updateOraclePrice();
+    const interval = setInterval(updateOraclePrice, 60000); // toutes les 60 secondes
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    updateOraclePrice();
     if (address && provider) {
       fetchEthBalance();
       fetchWEthBalanceWithProvider();
       fetchErc20Balance();
       fetchSoulboundBalance();
       fetchKycStatus();
-      fetchOracle();
+      
       fetchLazyTokenAddress();
       updateEstimatedOutput();
       fetchIndexerState();
-
       const interval = setInterval(fetchIndexerState, 2000);
       return () => clearInterval(interval);
     }
@@ -337,13 +344,21 @@ export default function HomePage() {
       setTxLoading(false);
     }
   }
-
-  async function fetchOracle() {
+  async function updateOraclePrice() {
     try {
-      const res = await fetch(`${BACKEND}:3001/oracle/price`);
-      const j = await res.json();
-      setOraclePrice(j.price ?? null);
-    } catch (e) {}
+      const res = await fetch(`${BACKEND}:3001/oracle/update-price`);
+      const json = await res.json();
+      if (!res.ok) alert("Error: " + JSON.stringify(json));
+      console.log(`Mise à jour du prix du LAZY: $${json.newPriceUsd} USD`);
+      console.log("📡 json.newPriceUSd type:", typeof json.newPriceUsd);
+      if (json.newPriceUsd == 0) {
+        console.warn("⚠️ Prix retourné à 0, ignorer la mise à jour");
+        return;
+      }
+      setOraclePrice(json.newPriceUsd.toString());
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async function handleSwap() {
@@ -485,11 +500,11 @@ export default function HomePage() {
           </div>
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 shadow-xl">
             <p className="text-purple-100 text-sm mb-2">LAZY Score</p>
-            <p className="text-3xl font-bold text-white">{parseFloat(erc20Balance).toFixed(6)}</p>
+            <p className="text-3xl font-bold text-white">{parseFloat(erc20Balance).toFixed(2)}</p>
           </div>
           <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-6 shadow-xl">
-            <p className="text-pink-100 text-sm mb-2">Oracle Price</p>
-            <p className="text-3xl font-bold text-white">${oraclePrice || "N/A"}</p>
+            <p className="text-pink-100 text-sm mb-2">Price of the LAZYNESS</p>
+            <p className="text-3xl font-bold text-white">${parseFloat(oraclePrice).toFixed(8)}</p>
           </div>
         </div>
 
@@ -642,7 +657,7 @@ export default function HomePage() {
       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-white flex items-center">
-            <span className="mr-2">📊</span> Real-Time LAZYNESS Indexer
+            <span className="mr-2">📊</span> Your Real-Time LAZYNESS Indexer
           </h2>
           
           {/* Indicateur d'écoute temps réel */}
