@@ -175,7 +175,7 @@ export default function HomePage() {
 
   async function fetchIndexerState() {
     try {
-      const res = await fetch("https://74.82.28.125:4001/api/state");
+      const res = await fetch("http://74.82.28.125:4001/api/state");
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const json: IndexerState = await res.json();
