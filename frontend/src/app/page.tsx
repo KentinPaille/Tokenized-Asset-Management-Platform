@@ -3,18 +3,10 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { useTransfersWithPersistence } from '../hooks/useTransfersWithPersistence';
 
-const BACKEND = "http://74.82.28.125";
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
 const RPC = process.env.NEXT_PUBLIC_RPC_URL;
-const SWAP_ROUTER = "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4";
-const UNISWAP_FACTORY = "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24";
 const WETH = "0x4200000000000000000000000000000000000006";
-const KYC_REGISTRY_ADDRESS = "0xe98F9dA208A83332a35Dc823DD0C637756B9AFf7";
 const SIMPLE_SWAP = "0x6FCD1B1e7acdc3feCa08ef5CD9055bc67a9ff518";
-
-// SwapRouter ABI (minimal)
-const SWAP_ROUTER_ABI = [
-  "function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96)) external payable returns (uint256 amountOut)"
-];
 
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
@@ -23,14 +15,6 @@ const ERC20_ABI = [
 ];
 
 export default function HomePage() {
-  // Basic Transfer type used by the indexer/list of transfers in this component
-  type Transfer = {
-    txHash: string;
-    from: string;
-    to: string;
-    value: any;
-  };
-
   const [provider, setProvider] = useState<any>(null);
   const [signer, setSigner] = useState<any>(null);
   const [address, setAddress] = useState<string>("");
@@ -169,8 +153,6 @@ export default function HomePage() {
     }
   }
 
-
-
   async function fetchIndexerState() {
     try {
       const res = await fetch(`http://74.82.28.125:4001/api/state`);
@@ -194,7 +176,6 @@ export default function HomePage() {
       }
     }
   }
-
 
   async function fetchWEthBalanceWithProvider() {
     try {
@@ -328,14 +309,9 @@ export default function HomePage() {
       
       let result;
       if (swapDirection === "ETH_TO_LAZY") {
-        // L'utilisateur entre combien de WETH il veut PAYER
-        // On calcule combien de LAZY il va RECEVOIR
-        // Formule inverse : lazyAmount = (wethAmount * 1e18) / price
         result = (amount * ethers.parseEther("1")) / price;
         console.log(`Avec ${swapAmount} WETH, vous recevez ${ethers.formatEther(result)} LAZY`);
       } else {
-        // L'utilisateur entre combien de LAZY il veut VENDRE
-        // On calcule combien de WETH il va RECEVOIR
         result = await simpleSwap.calculateSellPrice(amount);
         console.log(`En vendant ${swapAmount} LAZY, vous recevez ${ethers.formatEther(result)} WETH`);
       }
@@ -345,6 +321,7 @@ export default function HomePage() {
       setEstimatedOutput("0.0");
     }
   }
+
   async function requestWhitelist() {
     if (!address) return alert("Connect wallet first");
     setTxLoading(true);
@@ -360,7 +337,6 @@ export default function HomePage() {
       setTxLoading(false);
     }
   }
-
 
   async function fetchOracle() {
     try {
@@ -470,6 +446,7 @@ export default function HomePage() {
       </div>
     );
   }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-6 font-sans">
       <div className="max-w-7xl mx-auto">
@@ -507,7 +484,7 @@ export default function HomePage() {
             <p className="text-3xl font-bold text-white">{parseFloat(wethBalance).toFixed(8)}</p>
           </div>
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 shadow-xl">
-            <p className="text-purple-100 text-sm mb-2">LAZY Balance</p>
+            <p className="text-purple-100 text-sm mb-2">LAZY Score</p>
             <p className="text-3xl font-bold text-white">{parseFloat(erc20Balance).toFixed(6)}</p>
           </div>
           <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-6 shadow-xl">
@@ -562,7 +539,7 @@ export default function HomePage() {
                 onClick={mintErc20}
                 className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-indigo-600 transform hover:scale-105 transition-all"
               >
-                🪙 Mint 1 LAZY
+                🪙 Mint Some LAZYNESS
               </button>
               <div className="space-y-3">
                 <input
@@ -655,7 +632,7 @@ export default function HomePage() {
               </button>
               
               <p className="text-xs text-purple-300 text-center">
-                Pool Fee: 0.3% • Slippage: Auto
+                Pool Fee: 0.3% • Slippage: Auto • Pool Link <a href="https://sepolia.basescan.org/address/0x6FCD1B1e7acdc3feCa08ef5CD9055bc67a9ff518" target="_blank" className="underline">here</a>
               </p>
             </div>
           </div>
@@ -665,7 +642,7 @@ export default function HomePage() {
       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-white flex items-center">
-            <span className="mr-2">📊</span> Real-Time LAZY Indexer
+            <span className="mr-2">📊</span> Real-Time LAZYNESS Indexer
           </h2>
           
           {/* Indicateur d'écoute temps réel */}
